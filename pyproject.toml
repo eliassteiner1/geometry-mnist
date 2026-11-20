@@ -1,5 +1,5 @@
 [project]
-name = "3d-mnist"
+name = "geometry-mnist"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -25,7 +25,7 @@ cu134 = [
 ]
 
 [tool.uv.build-backend]
-module-name = "_3d_mnist"
+module-name = "geometry_mnist"
 
 [build-system]
 requires = ["uv_build>=0.13.7,<0.14.0"]
