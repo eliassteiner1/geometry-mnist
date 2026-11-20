@@ -1,0 +1,70 @@
+[project]
+name = "3d-mnist"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Elias Steiner", email = "elias.steiner@gmx.ch" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "h5py>=3.16.0",
+    "numpy>=2.5.5",
+    "tqdm>=4.70.1",
+    "tyro>=1.0.17",
+]
+
+[project.optional-dependencies]
+cpu = [
+    "torch>=2.15.0",
+    "torchvision>=0.29.2",
+]
+cu134 = [
+    "torch>=2.15.0",
+    "torchvision>=0.29.2",
+]
+
+[tool.uv.build-backend]
+module-name = "_3d_mnist"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "matplotlib>=3.11.2",
+]
+
+
+# ==============================================================================
+# torch build variants =========================================================
+# ==============================================================================
+#   uv sync --extra cpu      -> CPU-only torch
+#   uv sync --extra cu134    -> CUDA 13.4 torch
+
+[tool.uv]
+conflicts = [
+  [{ extra = "cpu" }, { extra = "cu134" }],
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true # only used for packages that explicitly point here via sources
+
+[[tool.uv.index]]
+name = "pytorch-cu134"
+url = "https://download.pytorch.org/whl/cu134"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu134", extra = "cu134" },
+]
+torchvision = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu134", extra = "cu134" },
+]
