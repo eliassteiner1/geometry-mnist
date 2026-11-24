@@ -5,7 +5,6 @@ from scipy.interpolate import make_splprep
 
 DIM = 3
 
-
 def _sig(x: np.ndarray) -> np.ndarray:
     """ basically a sigmoid to get a smooth transition from y=0 to y=1 over 1x (unitsquare) """
     a = 12
