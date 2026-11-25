@@ -1,12 +1,37 @@
 import math
 import einops as eo
 import torch
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ChainProps:
+    
+    resolution: int
+    far_pairs_mask: torch.Tensor
+    sobolev_k1: torch.Tensor
+    sobolev_k2: torch.Tensor
+
+    @property
+    def linklen(self) -> float:
+        # a knot chain is ideally always assumed to be normalized to ropelength=1
+        return 1/self.resolution
+
+    @property
+    def sobolev_k1_gain_point(self) -> float:
+        # gain from smoothing with this kernel -> changes standard deviation of noise that is smoothed
+        return float(self.sobolev_k1[0, :].norm())
+    
+    @property
+    def sobolev_k1_gain_diff(self) -> float:
+        # gain from smoothing with this kernel -> changes standard deviation of difference between two adjacent random sample from noise that is smoothed
+        return float((self.sobolev_k1[0, :] - self.sobolev_k1[0, :].roll(shifts=1)).norm())
+
 
 # one time at the beginning, only NUMBER of points relevant ==========================
 
 
 # this is not juuust for repulsion, but is more of a definition-mask for what is meant as being close neighbours on the chain and what isn't
-def construct_repulsion_mask(n_pts: int, excl_percentage: float = 0.02) -> torch.Tensor:
+def construct_far_pairs_mask(n_pts: int, excl_percentage: float = 0.02) -> torch.Tensor:
     """ mask to exclude the points that are close on the arc (thick diagonal matrix); works for uniform link length. determine what's close as a percentage of the total ropelength (excl_percentage) """
 
     idx = torch.arange(n_pts)
@@ -15,11 +40,11 @@ def construct_repulsion_mask(n_pts: int, excl_percentage: float = 0.02) -> torch
     mask = arc_distances > excl_percentage*n_pts
     return mask
 
-def construct_sobolev_kernel(n_points: int, reach_percentage: float = 0.02) -> torch.Tensor:
+def construct_sobolev_kernel(n_pts: int, reach_percentage: float = 0.02) -> torch.Tensor:
     """ generates the smoothing kernel matrix from sobolev gradients (this is H1 metric). the reach percentage is the "strength" of the smoothing; as a percentage of the entire chain length, it says at what point the kernel decays to less than 1/e (37%) strength (only valid ~0.2, then the wraparound effects of a closed chain start to become important). Note: the reach on the H2 squared version for gradients is ~2 times! """
     
     # define alpha in terms of the entire chain length (more or less cutoff @37% strength of kernel)
-    ell = reach_percentage * n_points
+    ell = reach_percentage * n_pts
     if ell == 0:
         alpha = 0
     else:
@@ -37,7 +62,7 @@ def construct_sobolev_kernel(n_points: int, reach_percentage: float = 0.02) -> t
     #
     #   usage:  push uses K @ K   (H^2, matches bending; reach ~ 2.15 ell)
     #           noise uses K      (since K K^T = K^2  ->  correct temperature)
-    I = torch.eye(n_points, dtype=torch.float64)
+    I = torch.eye(n_pts, dtype=torch.float64)
     L = -2*I  + I.roll(shifts=1, dims=0) + I.roll(shifts=-1, dims=0)
     A = I - alpha*L
     A_INV = torch.linalg.inv(A)

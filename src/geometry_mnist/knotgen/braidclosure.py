@@ -160,7 +160,7 @@ def generate_braid_closure(word: list, n_pts_per_ops: int = 30) -> np.ndarray:
     return pts
 
 def resample_normalize_chain(pts: np.ndarray, n_resample: int, smoothing: float = 0.0) -> np.ndarray:
-    """ resamples closed chain at regular arc-intervals to desired number of points and normalizes total ropelength """
+    """ resamples closed chain at regular arc-intervals to desired number of points and normalizes total ropelength. this is really important to give the simulation a stable starting point. """
     
     # fitting a spline through all rough points and resampling at uniform arc-intervals
     spl, _ = make_splprep(x=np.vstack([pts, pts[:1]]).T, k=3, s=smoothing, bc_type="periodic")
